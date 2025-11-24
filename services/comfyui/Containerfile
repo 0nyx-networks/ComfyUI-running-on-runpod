@@ -1,0 +1,61 @@
+# syntax=docker/dockerfile:1
+FROM docker.io/nvidia/cuda:12.8.1-runtime-ubuntu24.04
+ARG COMFYUI_TAG=v0.3.71
+ARG PYTHON_VERSION=3.12
+ENV COMFYUI_DIR=/comfyui
+ENV VENV_PATH=/opt/venv
+ENV WORKSPACE="/workspace"
+ENV PYTHONPATH="${PYTHONPATH}:${PWD}"
+ENV PATH="/root/.local/bin:${VENV_PATH}/bin:${PATH}"
+
+RUN set -eux \
+    && apt-get update \
+    && apt-get full-upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends curl git python3.12 python3.12-venv \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -LsSf https://astral.sh/uv/install.sh | sh \
+    && uv venv -p ${PYTHON_VERSION} ${VENV_PATH}
+
+RUN set -eux \
+    # ComfyUI をクローン,　依存関係をインストール
+    && git clone https://github.com/comfyanonymous/ComfyUI.git ${COMFYUI_DIR} \
+    && cd ${COMFYUI_DIR} \
+    && git checkout tags/${COMFYUI_TAG} \
+    && sed -i 's/^torch$/torch==2.7.1/' requirements.txt \
+    && uv pip install -r requirements.txt
+
+RUN set -eux \
+    # ComfyUI-Impact-Pack ノードをインストール
+    && cd ${COMFYUI_DIR}/custom_nodes \
+    && git clone https://github.com/ltdrdata/ComfyUI-Impact-Pack.git ComfyUI-Impact-Pack \
+    && cd ComfyUI-Impact-Pack \
+    && uv pip install -r requirements.txt
+
+RUN set -eux \
+    # rgthree-comfy ノードをインストール
+    && cd ${COMFYUI_DIR}/custom_nodes \
+    && git clone https://github.com/rgthree/rgthree-comfy.git rgthree-comfy \
+    && cd rgthree-comfy \
+    && uv pip install -r requirements.txt
+
+WORKDIR ${COMFYUI_DIR}
+
+COPY . /docker/
+RUN set -eux \
+    && chmod u+x /docker/entrypoint.sh \
+    && cp /docker/extra_model_paths.yaml ${COMFYUI_DIR} \
+    && mkdir -p ${COMFYUI_DIR}/custom_nodes/ \
+    && mv /docker/output_httpserver.py ${COMFYUI_DIR}/custom_nodes/ \
+    && chmod a+x ${COMFYUI_DIR}/custom_nodes/*.py
+
+# NVIDIAランタイムの設定
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
+ENV NVIDIA_DISABLE_REQUIRE=1
+
+ENV CLI_ARGS="--dont-print-server --force-fp16"
+
+EXPOSE 8188 8888
+ENTRYPOINT ["/docker/entrypoint.sh"]
+CMD python3 -u main.py --listen --port 8188 ${CLI_ARGS}

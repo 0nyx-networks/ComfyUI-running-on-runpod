@@ -1,0 +1,14 @@
+---
+a111:
+  base_path: /workspace
+  checkpoints: data/models/checkpoints
+  clip: data/models/clip
+  controlnet: data/models/controlnet
+  custom_nodes: /comfyui/custom_nodes
+  diffusion_models: data/models/diffusion_models
+  embeddings: data/embeddings
+  gligen: data/models/gligen
+  hypernetworks: data/models/hypernetworks
+  loras: data/models/loras
+  upscale_models: data/models/upscale_models
+  vae: data/models/vae

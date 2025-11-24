@@ -1,0 +1,5 @@
+/.devcontainer
+
+# VSCode specific
+*.code-workspace
+/.vscode
