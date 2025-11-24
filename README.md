@@ -23,22 +23,24 @@ echo "COMFYUI_TAG=v0.3.71" > env
 ./build.sh
 ```
 
-4. Upload AWS ECR
+4. Upload Amazon Elastic Container Registry (ECR) Public.  
+If you want to upload the built container to Amazon ECR Public, use the following commands:
 ```bash
+source ./env
 export AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
 export AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
 
 aws ecr-public get-login-password --region us-east-1 \
-  | podman login --username AWS --password-stdin public.ecr.aws/u3l2i4k1
+  | podman login --username AWS --password-stdin public.ecr.aws/{your-ECS-Alias}
 
 aws ecr-public create-repository \
   --region us-east-1 \
   --repository-name comfyui-runpod
 
-podman tag comfyui-runpod:v0.3.71 \
-  public.ecr.aws/u3l2i4k1/comfyui-runpod:v0.3.71
+podman tag comfyui-runpod:${COMFYUI_TAG} \
+  public.ecr.aws/{your-ECS-Alias}/comfyui-runpod:${COMFYUI_TAG}
 podman push \
-  public.ecr.aws/u3l2i4k1/comfyui-runpod:v0.3.71
+  public.ecr.aws/{your-ECS-Alias}/comfyui-runpod:${COMFYUI_TAG}
 ```
 
 ## Thanks
