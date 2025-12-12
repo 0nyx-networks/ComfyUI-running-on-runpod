@@ -2,6 +2,8 @@ import os
 import threading
 import http.server
 import socketserver
+import math
+from urllib.parse import urlparse, parse_qs
 
 
 # -----------------------------
@@ -12,6 +14,8 @@ PORT = 8888
 OUTPUT_DIR = os.path.abspath(
     "/workspace/output"  # ComfyUI の出力フォルダパスに合わせる
 )
+
+PAGE_SIZE = 64
 
 
 # -----------------------------
@@ -26,12 +30,12 @@ class ThreadedHTTPServer(threading.Thread):
 
     def run(self):
         os.chdir(self.directory)
-        # ギャラリーページを返すカスタムハンドラ
+
         class GalleryHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
             def __init__(self, *args, directory=None, **kwargs):
                 super().__init__(*args, directory=directory, **kwargs)
 
-            def list_images_html(self):
+            def list_images_html(self, page=1):
                 try:
                     files = sorted(
                         f for f in os.listdir(os.getcwd())
@@ -40,11 +44,39 @@ class ThreadedHTTPServer(threading.Thread):
                 except Exception:
                     files = []
 
-                # シンプルなギャラリー（遅延読み込みは IntersectionObserver を使用）
+                # ファイル名降順 (Z→A)
+                files = sorted(files, reverse=True)
+
+                total = len(files)
+                page = max(1, min(page, max(1, math.ceil(total / PAGE_SIZE) if PAGE_SIZE > 0 else 1)))
+                start = (page - 1) * PAGE_SIZE
+                end = start + PAGE_SIZE
+                page_files = files[start:end]
+
                 imgs_html = "\n".join(
                     f'<a href="{file}" target="_blank"><img data-src="{file}" alt="{file}" class="lazy"></a>'
-                    for file in files
+                    for file in page_files
                 ) or "<p>No images found.</p>"
+
+                total_pages = max(1, math.ceil(total / PAGE_SIZE)) if PAGE_SIZE > 0 else 1
+
+                # ページナビ
+                def page_link(p, text=None):
+                    text = text or str(p)
+                    return f'<a href="/?page={p}">{text}</a>'
+
+                nav_parts = []
+                if page > 1:
+                    nav_parts.append(page_link(page - 1, "Prev"))
+                # 簡易に先頭・直近・最後のページリンクを作る（多すぎないように）
+                for p in range(max(1, page - 2), min(total_pages, page + 2) + 1):
+                    if p == page:
+                        nav_parts.append(f'<strong>{p}</strong>')
+                    else:
+                        nav_parts.append(page_link(p))
+                if page < total_pages:
+                    nav_parts.append(page_link(page + 1, "Next"))
+                nav_html = " | ".join(nav_parts) or ""
 
                 html = f"""<!doctype html>
 <html lang="ja">
@@ -54,19 +86,24 @@ class ThreadedHTTPServer(threading.Thread):
   <title>ComfyUI Output Gallery</title>
   <style>
     body{{font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding:16px;}}
+    .meta{{margin-bottom:8px;color:#666;}}
     .grid{{display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px;}}
     .grid a{{display:block; overflow:hidden; border-radius:8px; background:#111; padding:4px;}}
     .grid img{{width:100%; height:180px; object-fit:cover; display:block; background:#222;}}
+    .pager{{margin:12px 0;padding:8px;background:#f5f5f5;border-radius:6px;}}
+    .pager a{{margin:0 6px;text-decoration:none;color:#06c;}}
+    .pager strong{{margin:0 6px;}}
   </style>
 </head>
 <body>
   <h1>ComfyUI Output Gallery</h1>
-  <p>Images are lazy-loaded. Click to open full image.</p>
+  <div class="meta">Total images: {total} — Page {page} / {total_pages}</div>
+  <div class="pager">{nav_html}</div>
   <div class="grid">
     {imgs_html}
   </div>
+  <div class="pager">{nav_html}</div>
   <script>
-    // IntersectionObserver を使った遅延読み込み
     const lazyImgs = [].slice.call(document.querySelectorAll('img.lazy'));
     if ('IntersectionObserver' in window) {{
       let obs = new IntersectionObserver((entries, observer) => {{
@@ -81,7 +118,6 @@ class ThreadedHTTPServer(threading.Thread):
       }}, {{rootMargin: '200px 0px'}});
       lazyImgs.forEach(img => obs.observe(img));
     }} else {{
-      // フォールバック: すべてロード
       lazyImgs.forEach(img => img.src = img.dataset.src);
     }}
   </script>
@@ -91,16 +127,27 @@ class ThreadedHTTPServer(threading.Thread):
                 return html
 
             def do_GET(self):
+                # クエリパラメータから page を取得
+                parsed = urlparse(self.path)
+                qs = parse_qs(parsed.query)
+                page_vals = qs.get("page", [])
+                try:
+                    page = int(page_vals[0]) if page_vals else 1
+                except Exception:
+                    page = 1
+
                 # ルートまたは index.html へのアクセスでギャラリーページを返す
-                if self.path in ('/', '/index.html'):
-                    content = self.list_images_html().encode('utf-8')
+                if parsed.path in ('/', '/index.html'):
+                    content = self.list_images_html(page=page).encode('utf-8')
                     self.send_response(200)
                     self.send_header('Content-Type', 'text/html; charset=utf-8')
                     self.send_header('Content-Length', str(len(content)))
                     self.end_headers()
                     self.wfile.write(content)
                     return
-                # それ以外は通常のファイル配信
+                # それ以外は通常のファイル配信（ファイルパスはそのまま）
+                # path にクエリが付いている場合は取り除いて渡す
+                self.path = parsed.path
                 return super().do_GET()
 
         handler_factory = lambda *args, **kwargs: GalleryHTTPRequestHandler(*args, directory=self.directory, **kwargs)
@@ -119,7 +166,7 @@ def start_server_if_needed():
 
     server = ThreadedHTTPServer(OUTPUT_DIR, PORT)
     server.start()
-    start_server_if_needed.server_started = True # type: ignore
+    start_server_if_needed.server_started = True  # type: ignore
 
 
 # モジュールインポート時に実行
