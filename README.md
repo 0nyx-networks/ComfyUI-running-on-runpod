@@ -1,4 +1,4 @@
-# ComfyUI running on runpod container
+# ComfyUI running on runpod 
 
 This repository provides a setup to run [ComfyUI](https://github.com/comfyanonymous/ComfyUI) on a Linux container using Podman/Docker.
 
@@ -21,25 +21,6 @@ echo "COMFYUI_TAG=v0.N.YY" > env
 3. Build the ComfyUI container.
 ```bash
 ./build.sh
-```
-
-4. Upload Amazon Elastic Container Registry (ECR) Public.  
-If you want to upload the built container to Amazon ECR Public, use the following commands:
-```bash
-source ./env
-export AWS_ACCESS_KEY_ID=$(aws configure get aws_access_key_id)
-export AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
-export AWS_PUBLIC_ECR_URL="public.ecr.aws/m10i"
-
-aws ecr-public get-login-password --region us-east-1 \
-  | podman login --username AWS --password-stdin ${AWS_PUBLIC_ECR_URL}
-
-aws ecr-public create-repository \
-  --region us-east-1 \
-  --repository-name comfyui-runpod
-
-podman tag comfyui-runpod:${COMFYUI_TAG} ${AWS_PUBLIC_ECR_URL}/comfyui-runpod:${COMFYUI_TAG}
-podman push ${AWS_PUBLIC_ECR_URL}/comfyui-runpod:${COMFYUI_TAG}
 ```
 
 ## Thanks
