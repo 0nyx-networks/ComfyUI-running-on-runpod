@@ -3,20 +3,22 @@ import threading
 import http.server
 import socketserver
 import math
+import tempfile
+import zipfile
 from urllib.parse import urlparse, parse_qs
 
 
 # -----------------------------
 # 設定
 # -----------------------------
-PORT = 8888
+PORT = int(os.environ.get("COMFYUI_PREVIEW_GALLERY_PORT", 8888))
 
 OUTPUT_DIR = os.path.abspath(
     "/workspace/output"  # ComfyUI の出力フォルダパスに合わせる
 )
 
-PAGE_SIZE = 64
-
+PAGE_SIZE = int(os.environ.get("COMFYUI_PREVIEW_GALLERY_PAGE_SIZE", 10))  # 1ページあたりの画像数（0で全件表示）
+IMAGE_EXTS = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.mp4', '.avi', '.webm')
 
 # -----------------------------
 # HTTP サーバスレッド
@@ -35,17 +37,65 @@ class ThreadedHTTPServer(threading.Thread):
             def __init__(self, *args, directory=None, **kwargs):
                 super().__init__(*args, directory=directory, **kwargs)
 
+            def collect_all_images(self):
+                imgs = []
+                for root, _, files in os.walk(os.getcwd()):
+                    for f in files:
+                        if f.lower().endswith(IMAGE_EXTS):
+                            full = os.path.join(root, f)
+                            rel = os.path.relpath(full, os.getcwd())
+                            imgs.append((full, rel))
+                # 名前降順（ファイル名基準）でソート
+                imgs.sort(key=lambda t: t[1], reverse=True)
+                return imgs
+
+            def send_zip_all_images(self):
+                imgs = self.collect_all_images()
+                if not imgs:
+                    self.send_response(404)
+                    self.send_header('Content-Type', 'text/plain; charset=utf-8')
+                    self.end_headers()
+                    self.wfile.write(b'No images to download.')
+                    return
+
+                # 一時ファイルを使ってZIPを作成（Temporary関数を利用）
+                with tempfile.NamedTemporaryFile(suffix='.zip', delete=True) as tmp:
+                    tmp_path = tmp.name
+
+                    with zipfile.ZipFile(tmp_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+                        for full, rel in imgs:
+                            # arcname は相対パスで保存
+                            try:
+                                zf.write(full, arcname=rel)
+                            except Exception:
+                                # 個別ファイル書込失敗は無視して続行
+                                continue
+                    tmp.seek(0)
+
+                    size = os.path.getsize(tmp_path)
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/zip')
+                    self.send_header('Content-Disposition', 'attachment; filename="comfyui_output_gallery.zip"')
+                    self.send_header('Content-Length', str(size))
+                    self.end_headers()
+
+                    # ストリーミング送信（メモリ節約）
+                    with open(tmp_path, 'rb') as f:
+                        chunk_size = 64 * 1024
+                        while True:
+                            chunk = f.read(chunk_size)
+                            if not chunk:
+                                break
+                            try:
+                                self.wfile.write(chunk)
+                            except BrokenPipeError:
+                                break
+
             def list_images_html(self, page=1):
                 try:
-                    files = sorted(
-                        f for f in os.listdir(os.getcwd())
-                        if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
-                    )
+                    files = [rel for (_, rel) in self.collect_all_images()]
                 except Exception:
                     files = []
-
-                # ファイル名降順 (Z→A)
-                files = sorted(files, reverse=True)
 
                 total = len(files)
                 page = max(1, min(page, max(1, math.ceil(total / PAGE_SIZE) if PAGE_SIZE > 0 else 1)))
@@ -60,15 +110,14 @@ class ThreadedHTTPServer(threading.Thread):
 
                 total_pages = max(1, math.ceil(total / PAGE_SIZE)) if PAGE_SIZE > 0 else 1
 
-                # ページナビ
                 def page_link(p, text=None):
                     text = text or str(p)
                     return f'<a href="/?page={p}">{text}</a>'
 
                 nav_parts = []
                 if page > 1:
+                    nav_parts.append(page_link(1, "First"))
                     nav_parts.append(page_link(page - 1, "Prev"))
-                # 簡易に先頭・直近・最後のページリンクを作る（多すぎないように）
                 for p in range(max(1, page - 2), min(total_pages, page + 2) + 1):
                     if p == page:
                         nav_parts.append(f'<strong>{p}</strong>')
@@ -76,7 +125,11 @@ class ThreadedHTTPServer(threading.Thread):
                         nav_parts.append(page_link(p))
                 if page < total_pages:
                     nav_parts.append(page_link(page + 1, "Next"))
+                    nav_parts.append(page_link(total_pages, "Last"))
                 nav_html = " | ".join(nav_parts) or ""
+
+                # ダウンロードリンクを追加
+                download_link = '<a href="/download.zip" style="margin-left:16px;">Download All (zip)</a>'
 
                 html = f"""<!doctype html>
 <html lang="ja">
@@ -96,8 +149,9 @@ class ThreadedHTTPServer(threading.Thread):
   </style>
 </head>
 <body>
-  <h1>ComfyUI Output Gallery</h1>
+  <h1>ComfyUI Preview Gallery</h1>
   <div class="meta">Total images: {total} — Page {page} / {total_pages}</div>
+  <div class="meta">{download_link}</div>
   <div class="pager">{nav_html}</div>
   <div class="grid">
     {imgs_html}
@@ -127,7 +181,6 @@ class ThreadedHTTPServer(threading.Thread):
                 return html
 
             def do_GET(self):
-                # クエリパラメータから page を取得
                 parsed = urlparse(self.path)
                 qs = parse_qs(parsed.query)
                 page_vals = qs.get("page", [])
@@ -136,7 +189,6 @@ class ThreadedHTTPServer(threading.Thread):
                 except Exception:
                     page = 1
 
-                # ルートまたは index.html へのアクセスでギャラリーページを返す
                 if parsed.path in ('/', '/index.html'):
                     content = self.list_images_html(page=page).encode('utf-8')
                     self.send_response(200)
@@ -145,15 +197,21 @@ class ThreadedHTTPServer(threading.Thread):
                     self.end_headers()
                     self.wfile.write(content)
                     return
-                # それ以外は通常のファイル配信（ファイルパスはそのまま）
-                # path にクエリが付いている場合は取り除いて渡す
+                elif parsed.path in ['/favicon.ico', '/robots.txt']:
+                    self.send_response(404)
+                    self.end_headers()
+                    return
+                elif parsed.path == '/download.zip':
+                    self.send_zip_all_images()
+                    return
+
                 self.path = parsed.path
                 return super().do_GET()
 
         handler_factory = lambda *args, **kwargs: GalleryHTTPRequestHandler(*args, directory=self.directory, **kwargs)
 
         with socketserver.TCPServer(("0.0.0.0", self.port), handler_factory) as httpd:
-            print(f"[ComfyUI-Output-HTTPServer] Serving '{self.directory}' at http://127.0.0.1:{self.port}")
+            print(f"[ComfyUI-Preview-Gallery] Serving '{self.directory}' at http://127.0.0.1:{self.port}")
             httpd.serve_forever()
 
 
@@ -168,10 +226,9 @@ def start_server_if_needed():
     server.start()
     start_server_if_needed.server_started = True  # type: ignore
 
-
-# モジュールインポート時に実行
-start_server_if_needed()
-
+if os.environ.get("ENABLED_COMFYUI_PREVIEW_GALLERY", "false") == "true":
+    # モジュールインポート時に実行
+    start_server_if_needed()
 
 # -----------------------------
 # ダミーノード（表示用）

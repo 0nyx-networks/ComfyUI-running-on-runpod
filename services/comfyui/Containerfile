@@ -1,30 +1,29 @@
 # syntax=container/dockerfile:1
 FROM docker.io/nvidia/cuda:12.8.1-runtime-ubuntu24.04
-ARG COMFYUI_TAG=v0.4.0
 ENV COMFYUI_DIR=/comfyui
 ENV UV_PYTHON_INSTALL_DIR=/opt/python
-ENV VENV_PATH=/opt/venv
+ENV VENV_PATH=/opt/python-venv
 ENV WORKSPACE="/workspace"
 ENV PYTHONPATH="${PYTHONPATH}:${PWD}"
 ENV PATH="/root/.local/bin:${VENV_PATH}/bin:${PATH}"
+ARG COMFYUI_TAG
 
 RUN set -eux \
     && apt-get update \
     && apt-get full-upgrade -y --no-install-recommends \
-    && apt-get install -y --no-install-recommends curl git aria2 ca-certificates parallel vim \
+    && apt-get install -y --no-install-recommends curl git aria2 ca-certificates parallel vim bash bash-completion \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && uv venv -p 3.13 ${VENV_PATH} \
-    && . ${VENV_PATH}/bin/activate \
-    && uv pip install nvidia-ml-py
+    && . ${VENV_PATH}/bin/activate
 
 RUN set -eux \
     # ComfyUI をクローン,　依存関係をインストール
     && git clone https://github.com/comfyanonymous/ComfyUI.git ${COMFYUI_DIR} \
     && cd ${COMFYUI_DIR} \
+    && if [ -z "${COMFYUI_TAG}" ]; then export COMFYUI_TAG="$(git describe --tags --abbrev=0)"; fi \
     && git checkout tags/${COMFYUI_TAG} \
-    && sed -i '/^pynvml=?.*$/d' requirements.txt \
     && uv pip install -r requirements.txt
 
 RUN set -eux \
@@ -32,7 +31,6 @@ RUN set -eux \
     && cd ${COMFYUI_DIR}/custom_nodes \
     && git clone https://github.com/ltdrdata/ComfyUI-Impact-Pack.git ComfyUI-Impact-Pack \
     && cd ComfyUI-Impact-Pack \
-    && sed -i '/^pynvml=?.*$/d' requirements.txt \
     && uv pip install -r requirements.txt
 
 RUN set -eux \
@@ -40,7 +38,6 @@ RUN set -eux \
     && cd ${COMFYUI_DIR}/custom_nodes \
     && git clone https://github.com/rgthree/rgthree-comfy.git rgthree-comfy \
     && cd rgthree-comfy \
-    && sed -i '/^pynvml=?.*$/d' requirements.txt \
     && uv pip install -r requirements.txt
 
 RUN set -eux \
@@ -48,7 +45,6 @@ RUN set -eux \
     && cd ${COMFYUI_DIR}/custom_nodes \
     && git clone https://github.com/crystian/comfyui-crystools.git comfyui-crystools \
     && cd comfyui-crystools \
-    && sed -i '/^pynvml=?.*$/d' requirements.txt \
     && uv pip install -r requirements.txt
 
 #RUN set -eux \
@@ -82,8 +78,10 @@ RUN set -eux \
     && chmod u+x /container/entrypoint.sh \
     && cp /container/extra_model_paths.yaml ${COMFYUI_DIR} \
     && mkdir -p ${COMFYUI_DIR}/custom_nodes/ \
-    && mv /container/output_httpserver.py ${COMFYUI_DIR}/custom_nodes/ \
-    && chmod a+x ${COMFYUI_DIR}/custom_nodes/*.py
+    && mv /container/*.py ${COMFYUI_DIR}/custom_nodes/ \
+    && chmod a+x ${COMFYUI_DIR}/custom_nodes/*.py \
+    && uv pip uninstall pynvml \
+    && uv pip install -U nvidia-ml-py
 
 # NVIDIAランタイムの設定
 ENV NVIDIA_VISIBLE_DEVICES=all
