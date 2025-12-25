@@ -2,7 +2,7 @@
 a111:
   base_path: /workspace
   checkpoints: data/models/checkpoints
-  clip: data/models/clip
+  clip_vision: data/models/clip_vision
   controlnet: data/models/controlnet
   custom_nodes: /comfyui/custom_nodes
   diffusion_models: data/models/diffusion_models
@@ -10,5 +10,6 @@ a111:
   gligen: data/models/gligen
   hypernetworks: data/models/hypernetworks
   loras: data/models/loras
+  text_encoders: data/models/text_encoders
   upscale_models: data/models/upscale_models
   vae: data/models/vae

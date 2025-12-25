@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 # --- 1. ディレクトリ作成 ---
 mkdir -p ${WORKSPACE}/data/.cache
-mkdir -p ${WORKSPACE}/data/models/{checkpoints,clip,clip_vision,controlnet,diffusion_models,gligen,hypernetworks,loras,text_encoders,upscale,vae}
+mkdir -p ${WORKSPACE}/data/models/{checkpoints,clip_vision,controlnet,diffusion_models,gligen,hypernetworks,loras,text_encoders,upscale,vae}
 
 declare -A MOUNTS
 
