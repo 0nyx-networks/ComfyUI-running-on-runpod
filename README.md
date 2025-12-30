@@ -14,9 +14,9 @@ git clone https://github.com/m10i-0nyx/ComfyUI-running-on-runpod.git
 cd ComfyUI-running-on-runpod
 ```
 
-2. (Optional) Create an `env` file to specify the ComfyUI version you want to use. If not specified, it will use the default version defined in the `build.sh` script.
+2. (Optional) Create an `.env` file to specify the ComfyUI version you want to use. If not specified, it will use the default version defined in the `build.sh` script.
 ```bash
-echo "COMFYUI_TAG=v0.5.NN" > env
+echo "COMFYUI_TAG=v0.6.0" > .env
 ```
 
 3. Build the ComfyUI container.
@@ -24,13 +24,21 @@ echo "COMFYUI_TAG=v0.5.NN" > env
 ./build.sh
 ```
 
-4. Push the container to AWS Elastic Container Registry (ECR).
+4. Select one of the following methods to push the container image to a container registry.
+
+Push the container to Amazon Elastic Container Registry (ECR).
 ```bash
-sed -i 's|export AWS_PUBLIC_ECR_URL=.*$|export AWS_PUBLIC_ECR_URL="public.ecr.aws/{USER ECR}"|' push_aws_ecr.sh
+export AWS_PUBLIC_ECR_URL="public.ecr.aws/{USERNAME}/comfyui-runpod"
 ./push_aws_ecr.sh
 ```
 
-5. Deploy a Pod on Runpod using the pushed container image URL.
+Push the container to Github Packages Registry.
+```bash
+export GITHUB_USERNAME="GITHUB USERNAME"
+./push_github_packages.sh
+```
+
+6. Deploy a Pod on Runpod using the pushed container image URL.
 
 ## Thanks
 

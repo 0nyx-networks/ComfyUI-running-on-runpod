@@ -29,21 +29,21 @@ RUN set -eux \
 RUN set -eux \
     # ComfyUI-Impact-Pack ノードをインストール
     && cd ${COMFYUI_DIR}/custom_nodes \
-    && git clone https://github.com/ltdrdata/ComfyUI-Impact-Pack.git ComfyUI-Impact-Pack \
-    && cd ComfyUI-Impact-Pack \
+    && git clone -b Main --depth 1 https://github.com/ltdrdata/ComfyUI-Impact-Pack.git comfyuui-impact-pack \
+    && cd comfyuui-impact-pack \
     && uv pip install -r requirements.txt
 
 RUN set -eux \
     # rgthree-comfy ノードをインストール
     && cd ${COMFYUI_DIR}/custom_nodes \
-    && git clone https://github.com/rgthree/rgthree-comfy.git rgthree-comfy \
+    && git clone -b main --depth 1 https://github.com/rgthree/rgthree-comfy.git rgthree-comfy \
     && cd rgthree-comfy \
     && uv pip install -r requirements.txt
 
 RUN set -eux \
     # comfyui-crystools ノードをインストール
     && cd ${COMFYUI_DIR}/custom_nodes \
-    && git clone https://github.com/crystian/comfyui-crystools.git comfyui-crystools \
+    && git clone -b main --depth 1 https://github.com/crystian/comfyui-crystools.git comfyui-crystools \
     && cd comfyui-crystools \
     && uv pip install -r requirements.txt
 
@@ -51,25 +51,24 @@ RUN set -eux \
 #    # comfyui_controlnet_aux ノードをインストール
 #    # Python 3.13非対応のためコメントアウト
 #    && cd ${COMFYUI_DIR}/custom_nodes \
-#    && git clone https://github.com/Fannovel16/comfyui_controlnet_aux.git comfyui_controlnet_aux \
-#    && cd comfyui_controlnet_aux \
-#    && sed -i '/^pynvml=?.*$/d' requirements.txt \
+#    && git clone -b main --depth 1 https://github.com/Fannovel16/comfyui_controlnet_aux.git comfyui-controlnet-aux \
+#    && cd comfyui-controlnet-aux \
 #    && uv pip install -r requirements.txt
 
 RUN set -eux \
     # ComfyUI-Custom-Scripts ノードをインストール
     && cd ${COMFYUI_DIR}/custom_nodes \
-    && git clone https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git ComfyUI-Custom-Scripts
+    && git clone -b main --depth 1 https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git comfyui-custom-scripts
 
 RUN set -eux \
     # ComfyUI-Autocomplete-Plus ノードをインストール
     && cd ${COMFYUI_DIR}/custom_nodes \
-    && git clone https://github.com/newtextdoc1111/ComfyUI-Autocomplete-Plus.git ComfyUI-Autocomplete-Plus
+    && git clone -b main --depth 1 https://github.com/newtextdoc1111/ComfyUI-Autocomplete-Plus.git comfyui-autocomplete-plus
 
 RUN set -eux \
     # ComfyUI-ppm ノードをインストール
     && cd ${COMFYUI_DIR}/custom_nodes \
-    && git clone https://github.com/pamparamm/ComfyUI-ppm.git ComfyUI-ppm
+    && git clone -b master --depth 1 https://github.com/pamparamm/ComfyUI-ppm.git comfyui-ppm
 
 WORKDIR ${COMFYUI_DIR}
 
@@ -88,7 +87,7 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility
 ENV NVIDIA_DISABLE_REQUIRE=1
 
-ENV CLI_ARGS="--dont-print-server --force-fp16"
+ENV CLI_ARGS="--dont-print-server --enable-manager"
 
 EXPOSE 8188 8888
 ENTRYPOINT ["/container/entrypoint.sh"]
