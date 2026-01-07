@@ -5,12 +5,14 @@ set -Eeuo pipefail
 # --- 1. ディレクトリ作成 ---
 mkdir -p ${WORKSPACE}/data/.cache
 mkdir -p ${WORKSPACE}/data/models/{checkpoints,clip_vision,controlnet,diffusion_models,gligen,hypernetworks,loras,text_encoders,upscale,vae}
+mkdir -p ${WORKSPACE}/comfyui/custom_nodes
 
 declare -A MOUNTS
 
 MOUNTS["/root/.cache"]="${WORKSPACE}/data/.cache"
 MOUNTS["${WORKSPACE}/input"]="${WORKSPACE}/data/config/input"
 MOUNTS["/comfyui/output"]="${WORKSPACE}/output"
+MOUNTS["/comfyui/custom_nodes"]="${WORKSPACE}/comfyui/custom_nodes"
 
 for to_path in "${!MOUNTS[@]}"; do
     set -Eeuo pipefail
@@ -118,9 +120,9 @@ else
 fi
 
 # --- 5. startup.sh があれば実行 ---
-if [ -f "${WORKSPACE}/data/config/startup.sh" ]; then
-    pushd ${WORKSPACE}
-    . ${WORKSPACE}/data/config/startup.sh
+if [ -f "${WORKSPACE}/comfyui/startup.sh" ]; then
+    pushd ${WORKSPACE}/comfyui
+    . ${WORKSPACE}/comfyui/startup.sh
     popd
 fi
 

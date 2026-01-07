@@ -47,14 +47,6 @@ RUN set -eux \
     && cd comfyui-crystools \
     && uv pip install -r requirements.txt
 
-#RUN set -eux \
-#    # comfyui_controlnet_aux ノードをインストール
-#    # Python 3.13非対応のためコメントアウト
-#    && cd ${COMFYUI_DIR}/custom_nodes \
-#    && git clone -b main --depth 1 https://github.com/Fannovel16/comfyui_controlnet_aux.git comfyui-controlnet-aux \
-#    && cd comfyui-controlnet-aux \
-#    && uv pip install -r requirements.txt
-
 RUN set -eux \
     # ComfyUI-Custom-Scripts ノードをインストール
     && cd ${COMFYUI_DIR}/custom_nodes \
