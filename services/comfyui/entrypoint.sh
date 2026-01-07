@@ -51,6 +51,7 @@ chmod a+x ${WORKSPACE}/comfyui/custom_nodes/*.py
 # ComfyUI-Impact-Pack ノードをインストール
 cd ${WORKSPACE}/comfyui/custom_nodes
 if [ ! -d "comfyui-impact-pack" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
+    echo "Installing/upgrading ComfyUI-Impact-Pack..."
     git clone -b Main --depth 1 https://github.com/ltdrdata/ComfyUI-Impact-Pack.git comfyui-impact-pack
     cd comfyui-impact-pack
     uv pip install -r requirements.txt
@@ -59,6 +60,7 @@ fi
 # rgthree-comfy ノードをインストール
 cd ${WORKSPACE}/comfyui/custom_nodes
 if [ ! -d "rgthree-comfy" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
+    echo "Installing/upgrading rgthree-comfy..."
     git clone -b main --depth 1 https://github.com/rgthree/rgthree-comfy.git rgthree-comfy
     cd rgthree-comfy
     uv pip install -r requirements.txt
@@ -67,6 +69,7 @@ fi
 # comfyui-crystools ノードをインストール
 cd ${WORKSPACE}/comfyui/custom_nodes
 if [ ! -d "comfyui-crystools" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
+    echo "Installing/upgrading comfyui-crystools..."
     git clone -b main --depth 1 https://github.com/crystian/comfyui-crystools.git comfyui-crystools
     cd comfyui-crystools
     uv pip install -r requirements.txt
@@ -75,18 +78,21 @@ fi
 # ComfyUI-Custom-Scripts ノードをインストール
 cd ${WORKSPACE}/comfyui/custom_nodes
 if [ ! -d "comfyui-custom-scripts" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
+    echo "Installing/upgrading ComfyUI-Custom-Scripts..."
     git clone -b main --depth 1 https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git comfyui-custom-scripts
 fi
 
 # ComfyUI-Autocomplete-Plus ノードをインストール
 cd ${WORKSPACE}/comfyui/custom_nodes
 if [ ! -d "comfyui-autocomplete-plus" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
+    echo "Installing/upgrading ComfyUI-Autocomplete-Plus..."
     git clone -b main --depth 1 https://github.com/newtextdoc1111/ComfyUI-Autocomplete-Plus.git comfyui-autocomplete-plus
 fi
 
 # ComfyUI-ppm ノードをインストール
 cd ${WORKSPACE}/comfyui/custom_nodes
 if [ ! -d "comfyui-ppm" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
+    echo "Installing/upgrading ComfyUI-ppm..."
     git clone -b master --depth 1 https://github.com/pamparamm/ComfyUI-ppm.git comfyui-ppm
 fi
 
