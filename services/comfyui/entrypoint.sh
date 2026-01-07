@@ -54,9 +54,9 @@ if [ ! -d "comfyui-impact-pack" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" 
     echo "Installing/upgrading ComfyUI-Impact-Pack..."
     rm -rf comfyui-impact-pack >/dev/null 2>&1
     git clone -b Main --depth 1 https://github.com/ltdrdata/ComfyUI-Impact-Pack.git comfyui-impact-pack
-    cd comfyui-impact-pack
-    uv pip install -r requirements.txt
 fi
+cd comfyui-impact-pack
+uv pip install -r requirements.txt
 popd
 
 # rgthree-comfy ノードをインストール
@@ -65,9 +65,9 @@ if [ ! -d "rgthree-comfy" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "tru
     echo "Installing/upgrading rgthree-comfy..."
     rm -rf rgthree-comfy >/dev/null 2>&1
     git clone -b main --depth 1 https://github.com/rgthree/rgthree-comfy.git rgthree-comfy
-    cd rgthree-comfy
-    uv pip install -r requirements.txt
 fi
+cd rgthree-comfy
+uv pip install -r requirements.txt
 popd
 
 # comfyui-crystools ノードをインストール
@@ -76,9 +76,9 @@ if [ ! -d "comfyui-crystools" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = 
     echo "Installing/upgrading comfyui-crystools..."
     rm -rf comfyui-crystools >/dev/null 2>&1
     git clone -b main --depth 1 https://github.com/crystian/comfyui-crystools.git comfyui-crystools
-    cd comfyui-crystools
-    uv pip install -r requirements.txt
 fi
+cd comfyui-crystools
+uv pip install -r requirements.txt
 popd
 
 # ComfyUI-Custom-Scripts ノードをインストール

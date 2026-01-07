@@ -14,9 +14,9 @@ git clone https://github.com/m10i-0nyx/ComfyUI-running-on-runpod.git
 cd ComfyUI-running-on-runpod
 ```
 
-2. (Optional) Create an `.env` file to specify the ComfyUI version you want to use. If not specified, it will use the default version defined in the `build.sh` script.
+2. (Optional) Create an `env` file to specify the ComfyUI version you want to use. If not specified, it will use the default version defined in the `build.sh` script.
 ```bash
-echo "COMFYUI_TAG=v0.6.0" > .env
+echo "COMFYUI_TAG=v0.8.0" > env
 ```
 
 3. Build the ComfyUI container.
