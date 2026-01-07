@@ -21,6 +21,8 @@ podman container run -d --replace \
   --env "ENABLED_FLUX2_MODELS_CHECKSUM=${ENABLED_FLUX2_MODELS_CHECKSUM:-"false"}" \
   --env "ENABLED_QWENIMAGE_MODELS_DOWNLOAD=${ENABLED_QWENIMAGE_MODELS_DOWNLOAD:-"false"}" \
   --env "ENABLED_QWENIMAGE_MODELS_CHECKSUM=${ENABLED_QWENIMAGE_MODELS_CHECKSUM:-"false"}" \
+  --env "ENABLED_LTX2_MODELS_DOWNLOAD=${ENABLED_LTX2_MODELS_DOWNLOAD:-'false'}" \
+  --env "ENABLED_LTX2FP8_MODELS_DOWNLOAD=${ENABLED_LTX2FP8_MODELS_DOWNLOAD:-'false'}" \
   localhost/comfyui-running-on-runpod:${COMFYUI_TAG:-"latest"}
 
 podman container logs -f comfyui-running-on-runpod
