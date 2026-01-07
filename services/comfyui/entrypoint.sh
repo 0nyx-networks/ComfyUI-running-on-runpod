@@ -42,7 +42,55 @@ if [ "${TORCH_CUDA_AVAILABLE}" = "False" ]; then
     exec /bin/bash || exec /bin/sh
 fi
 
-# --- 4. safetensors の自動ダウンロード機能 ---
+# --- 4. カスタムノードをインストール ---
+
+# カスタムノードのコピー
+cp /container/*.py ${WORKSPACE}/comfyui/custom_nodes/
+chmod a+x ${WORKSPACE}/comfyui/custom_nodes/*.py
+
+# ComfyUI-Impact-Pack ノードをインストール
+cd ${WORKSPACE}/comfyui/custom_nodes
+if [ ! -d "comfyui-impact-pack" ]; then
+    git clone -b Main --depth 1 https://github.com/ltdrdata/ComfyUI-Impact-Pack.git comfyui-impact-pack
+    cd comfyui-impact-pack
+    uv pip install -r requirements.txt
+fi
+
+# rgthree-comfy ノードをインストール
+cd ${WORKSPACE}/comfyui/custom_nodes
+if [ ! -d "rgthree-comfy" ]; then
+    git clone -b main --depth 1 https://github.com/rgthree/rgthree-comfy.git rgthree-comfy
+    cd rgthree-comfy
+    uv pip install -r requirements.txt
+fi
+
+# comfyui-crystools ノードをインストール
+cd ${WORKSPACE}/comfyui/custom_nodes
+if [ ! -d "comfyui-crystools" ]; then
+    git clone -b main --depth 1 https://github.com/crystian/comfyui-crystools.git comfyui-crystools
+    cd comfyui-crystools
+    uv pip install -r requirements.txt
+fi
+
+# ComfyUI-Custom-Scripts ノードをインストール
+cd ${WORKSPACE}/comfyui/custom_nodes
+if [ ! -d "comfyui-custom-scripts" ]; then
+    git clone -b main --depth 1 https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git comfyui-custom-scripts
+fi
+
+# ComfyUI-Autocomplete-Plus ノードをインストール
+cd ${WORKSPACE}/comfyui/custom_nodes
+if [ ! -d "comfyui-autocomplete-plus" ]; then
+    git clone -b main --depth 1 https://github.com/newtextdoc1111/ComfyUI-Autocomplete-Plus.git comfyui-autocomplete-plus
+fi
+
+# ComfyUI-ppm ノードをインストール
+cd ${WORKSPACE}/comfyui/custom_nodes
+if [ ! -d "comfyui-ppm" ]; then
+    git clone -b master --depth 1 https://github.com/pamparamm/ComfyUI-ppm.git comfyui-ppm
+fi
+
+# --- 5. safetensors の自動ダウンロード機能 ---
 export DOWNLOAD_LIST="/container/download_list.txt"
 export CHECKSUM_LIST="/container/checksum_list.txt"
 export DOWNLOAD_DIR="${WORKSPACE}/data/models"
@@ -118,12 +166,12 @@ else
     echo "No ${CHECKSUM_LIST} found. Skipping checksum verification."
 fi
 
-# --- 5. startup.sh があれば実行 ---
+# --- 6. startup.sh があれば実行 ---
 if [ -f "${WORKSPACE}/comfyui/startup.sh" ]; then
     pushd ${WORKSPACE}/comfyui
     . ${WORKSPACE}/comfyui/startup.sh
     popd
 fi
 
-# --- 6. コマンド実行 ---
+# --- 7. コマンド実行 ---
 exec "$@"

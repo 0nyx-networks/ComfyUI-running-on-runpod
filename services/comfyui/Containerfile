@@ -25,44 +25,7 @@ RUN set -eux \
     && if [ -z "${COMFYUI_TAG}" ]; then export COMFYUI_TAG="$(git describe --tags --abbrev=0)"; fi \
     && git checkout tags/${COMFYUI_TAG} \
     && uv pip install -r requirements.txt \
-    && uv pip install -r manager_requirements.txt \
-    && mkdir -p ${WORKSPACE}/comfyui/custom_nodes
-
-RUN set -eux \
-    # ComfyUI-Impact-Pack ノードをインストール
-    && cd ${WORKSPACE}/comfyui/custom_nodes \
-    && git clone -b Main --depth 1 https://github.com/ltdrdata/ComfyUI-Impact-Pack.git comfyui-impact-pack \
-    && cd comfyui-impact-pack \
-    && uv pip install -r requirements.txt
-
-RUN set -eux \
-    # rgthree-comfy ノードをインストール
-    && cd ${WORKSPACE}/comfyui/custom_nodes \
-    && git clone -b main --depth 1 https://github.com/rgthree/rgthree-comfy.git rgthree-comfy \
-    && cd rgthree-comfy \
-    && uv pip install -r requirements.txt
-
-RUN set -eux \
-    # comfyui-crystools ノードをインストール
-    && cd ${WORKSPACE}/comfyui/custom_nodes \
-    && git clone -b main --depth 1 https://github.com/crystian/comfyui-crystools.git comfyui-crystools \
-    && cd comfyui-crystools \
-    && uv pip install -r requirements.txt
-
-RUN set -eux \
-    # ComfyUI-Custom-Scripts ノードをインストール
-    && cd ${WORKSPACE}/comfyui/custom_nodes \
-    && git clone -b main --depth 1 https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git comfyui-custom-scripts
-
-RUN set -eux \
-    # ComfyUI-Autocomplete-Plus ノードをインストール
-    && cd ${WORKSPACE}/comfyui/custom_nodes \
-    && git clone -b main --depth 1 https://github.com/newtextdoc1111/ComfyUI-Autocomplete-Plus.git comfyui-autocomplete-plus
-
-RUN set -eux \
-    # ComfyUI-ppm ノードをインストール
-    && cd ${WORKSPACE}/comfyui/custom_nodes \
-    && git clone -b master --depth 1 https://github.com/pamparamm/ComfyUI-ppm.git comfyui-ppm
+    && uv pip install -r manager_requirements.txt
 
 WORKDIR ${COMFYUI_DIR}
 
@@ -71,8 +34,6 @@ COPY . /container/
 RUN set -eux \
     && chmod u+x /container/entrypoint.sh \
     && cp /container/extra_model_paths.yaml ${COMFYUI_DIR} \
-    && mv /container/*.py ${WORKSPACE}/comfyui/custom_nodes/ \
-    && chmod a+x ${WORKSPACE}/comfyui/custom_nodes/*.py \
     && uv pip uninstall pynvml \
     && uv pip install -U nvidia-ml-py
 
