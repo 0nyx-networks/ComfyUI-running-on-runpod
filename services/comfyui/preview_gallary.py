@@ -323,41 +323,14 @@ class ThreadedHTTPServer(threading.Thread):
         handler_factory = lambda *args, **kwargs: GalleryHTTPRequestHandler(*args, directory=self.directory, **kwargs)
 
         with socketserver.TCPServer(("0.0.0.0", self.port), handler_factory) as httpd:
-            print(f"[ComfyUI-Preview-Gallery] Serving '{self.directory}' at http://127.0.0.1:{self.port}")
+            print(f"[Preview-Gallery] Serving '{self.directory}' at http://127.0.0.1:{self.port}")
             httpd.serve_forever()
 
-
-# -----------------------------
-# ComfyUI 起動時に自動実行
-# -----------------------------
-def start_server_if_needed():
-    if getattr(start_server_if_needed, "server_started", False):
-        return
-
+def main():
     server = ThreadedHTTPServer(OUTPUT_DIR, PORT)
     server.start()
-    start_server_if_needed.server_started = True  # type: ignore
 
-if os.environ.get("ENABLED_COMFYUI_PREVIEW_GALLERY", "false") == "true":
-    # モジュールインポート時に実行
-    start_server_if_needed()
-
-# -----------------------------
-# ダミーノード（表示用）
-# -----------------------------
-class PreviewGalleryHTTPServerAuto:
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {"required": {}}
-
-    RETURN_TYPES = ()
-    FUNCTION = "noop"
-    CATEGORY = "server"
-
-    def noop(self):
-        return ()
-
-
-NODE_CLASS_MAPPINGS = {
-    "PreviewGalleryHTTPServerAuto": PreviewGalleryHTTPServerAuto
-}
+if __name__ == "__main__":
+    if os.environ.get("ENABLED_COMFYUI_PREVIEW_GALLERY", "false") == "true":
+        # モジュールインポート時に実行
+        main()

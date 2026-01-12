@@ -5,7 +5,7 @@ set -Eeuo pipefail
 # --- 1. ディレクトリ作成 ---
 mkdir -p ${WORKSPACE}/data/.cache
 mkdir -p ${WORKSPACE}/data/comfyui/custom_nodes
-mkdir -p ${WORKSPACE}/data/models/{checkpoints,clip_vision,controlnet,diffusion_models,gligen,hypernetworks,loras,text_encoders,upscale,vae}
+mkdir -p ${WORKSPACE}/data/models/{checkpoints,clip_vision,configs,controlnet,diffusion_models,unet,hypernetworks,loras,text_encoders,upscale_models,vae,audio_encoders,model_patches,latent_upscale_models}
 
 declare -A MOUNTS
 
@@ -39,14 +39,11 @@ python -c "import torch; print('torch=', torch.__version__); print('torch_cuda='
 export TORCH_CUDA_AVAILABLE=$(python -c "import torch; print(torch.cuda.is_available())")
 if [ "${TORCH_CUDA_AVAILABLE}" = "False" ]; then
     echo "CUDA is not available. Dropping to shell for debugging."
-    exec /bin/bash || exec /bin/sh
+    echo "sleeping infinity..."
+    sleep infinity
 fi
 
 # --- 4. カスタムノードをインストール ---
-
-# カスタムノードのコピー
-cp /container/*.py ${WORKSPACE}/data/comfyui/custom_nodes/
-chmod a+x ${WORKSPACE}/data/comfyui/custom_nodes/*.py
 
 # ComfyUI-Impact-Pack ノードをインストール
 pushd "${WORKSPACE}/data/comfyui/custom_nodes"
@@ -97,6 +94,13 @@ if [ ! -d "comfyui-ppm" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true"
 fi
 popd
 
+# matrix-nio をインストール(ComfyUI-Manager 用)
+uv pip install matrix-nio
+
+# pynvml を nvidia-ml-py に置き換え
+uv pip uninstall pynvml
+uv pip install -U nvidia-ml-py
+
 # --- 5. safetensors の自動ダウンロード機能 ---
 export DOWNLOAD_LIST="/container/download_list.txt"
 export CHECKSUM_LIST="/container/checksum_list.txt"
@@ -133,6 +137,12 @@ fi
 if [ -z "${ENABLED_QWENIMAGE_MODELS_CHECKSUM:-''}" ] && [ "${ENABLED_QWENIMAGE_MODELS_CHECKSUM:-'false'}" = "true" ]; then
     echo "Qwen-Image Models checksum verification enabled."
     cat /container/preset_lists/checksum_qwenimage.txt >> "${CHECKSUM_LIST}"
+fi
+
+# LTX2 Video Models
+if [ -z "${ENABLED_LTX2_MODELS_DOWNLOAD:-''}" ] && [ "${ENABLED_LTX2_MODELS_DOWNLOAD:-'false'}" = "true" ]; then
+    echo "LTX2 Video Models download enabled."
+    cat /container/preset_lists/download_ltx2.txt >> "${DOWNLOAD_LIST}"
 fi
 
 # Custom user lists
@@ -181,4 +191,25 @@ if [ -f "${WORKSPACE}/comfyui/startup.sh" ]; then
 fi
 
 # --- 7. コマンド実行 ---
-exec "$@"
+pushd ${COMFYUI_DIR}
+if [ "${NUMBER_OF_GPUS}" -gt 1 ]; then
+    echo "***** Starting ${NUMBER_OF_GPUS} ComfyUI processes *****"
+    LISTEN_PORT=8188
+    for ((idx=0; idx<${NUMBER_OF_GPUS}; idx++)); do
+        CURRENT_PORT=$(($LISTEN_PORT + $idx))
+        echo "***** Starting ComfyUI process $(($idx+1))/${NUMBER_OF_GPUS} on port ${CURRENT_PORT} with GPU ${idx} *****"
+        CUDA_VISIBLE_DEVICES=${idx} python3 -u main.py --listen 0.0.0.0 --port ${CURRENT_PORT} ${CLI_ARGS} &
+    done
+else
+    echo "***** Starting ComfyUI processes *****"
+    CUDA_VISIBLE_DEVICES=all python3 -u main.py --listen 0.0.0.0 --port 8188 ${CLI_ARGS} &
+fi
+popd
+
+# --- 7. start preview gallery ---
+pushd /container
+chmod a+x preview_gallery.py
+python3 preview_gallery.py &
+popd
+
+wait

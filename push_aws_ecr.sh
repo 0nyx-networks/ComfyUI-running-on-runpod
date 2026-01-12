@@ -22,3 +22,7 @@ aws ecr-public create-repository \
 
 podman tag comfyui-running-on-runpod:${COMFYUI_TAG:-"latest"} ${AWS_PUBLIC_ECR_URL}:${COMFYUI_TAG:-"latest"}
 podman push ${AWS_PUBLIC_ECR_URL}:${COMFYUI_TAG:-"latest"}
+podman tag ${AWS_PUBLIC_ECR_URL}:${COMFYUI_TAG:-"latest"} ${AWS_PUBLIC_ECR_URL}:latest
+podman push ${AWS_PUBLIC_ECR_URL}:latest
+podman image rm ${AWS_PUBLIC_ECR_URL}:latest
+podman image rm ${AWS_PUBLIC_ECR_URL}:${COMFYUI_TAG:-"latest"}
