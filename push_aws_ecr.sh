@@ -5,7 +5,7 @@ export AWS_SECRET_ACCESS_KEY=$(aws configure get aws_secret_access_key)
 export AWS_PUBLIC_ECR_URL=${AWS_PUBLIC_ECR_URL:-'public.ecr.aws/m10i/comfyui-running-on-runpod'}
 
 # ComfyUI tag initial value
-export COMFYUI_TAG="v0.8.0"
+export COMFYUI_TAG="v0.11.0"
 
 if [ -f ./env ]; then
   set -a

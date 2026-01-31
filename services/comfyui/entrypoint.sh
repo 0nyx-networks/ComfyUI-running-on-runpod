@@ -10,7 +10,7 @@ mkdir -p ${WORKSPACE}/data/models/{checkpoints,clip_vision,configs,controlnet,di
 declare -A MOUNTS
 
 MOUNTS["/root/.cache"]="${WORKSPACE}/data/.cache"
-MOUNTS["${WORKSPACE}/input"]="${WORKSPACE}/data/config/input"
+#MOUNTS["${WORKSPACE}/input"]="${WORKSPACE}/data/config/input"
 MOUNTS["/comfyui/output"]="${WORKSPACE}/output"
 
 for to_path in "${!MOUNTS[@]}"; do
@@ -26,7 +26,10 @@ for to_path in "${!MOUNTS[@]}"; do
 done
 
 # --- 2. Python venv activate & exec ---
-. ${VENV_PATH}/bin/activate
+source ${VENV_PATH}/bin/activate
+
+# Upgrade torch to latest stable
+uv pip install --upgrade "torch>=2.10.0" torchvision torchaudio
 
 # --- 3. Print system info ---
 echo "===== ComfyUI Entrypoint Info ====="
@@ -44,6 +47,17 @@ if [ "${TORCH_CUDA_AVAILABLE}" = "False" ]; then
 fi
 
 # --- 4. カスタムノードをインストール ---
+
+# Pixel Socket extensions for ComfyUI ノードをインストール
+pushd "${WORKSPACE}/data/comfyui/custom_nodes"
+if [ ! -d "pixel-socket-extensions-for-comfyui" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
+    echo "Installing/upgrading pixel-socket-extensions-for-comfyui..."
+    rm -rf pixel-socket-extensions-for-comfyui >/dev/null 2>&1
+    git clone -b main --depth 1 https://github.com/foundation0-link/pixel-socket-extensions-for-comfyui.git
+fi
+cd pixel-socket-extensions-for-comfyui
+uv pip install -r requirements.txt
+popd
 
 # ComfyUI-Impact-Pack ノードをインストール
 pushd "${WORKSPACE}/data/comfyui/custom_nodes"
@@ -114,29 +128,17 @@ if [ -z "${ENABLED_WAN2_MODELS_DOWNLOAD:-''}" ] && [ "${ENABLED_WAN2_MODELS_DOWN
     echo "WAN2 Models download enabled."
     cat /container/preset_lists/download_wan2.txt >> "${DOWNLOAD_LIST}"
 fi
-if [ -z "${ENABLED_WAN2_MODELS_CHECKSUM:-''}" ] && [ "${ENABLED_WAN2_MODELS_CHECKSUM:-'false'}" = "true" ]; then
-    echo "WAN2 Models checksum verification enabled."
-    cat /container/preset_lists/checksum_wan2.txt >> "${CHECKSUM_LIST}"
-fi
 
 # FLUX.2 Models
 if [ -z "${ENABLED_FLUX2_MODELS_DOWNLOAD:-''}" ] && [ "${ENABLED_FLUX2_MODELS_DOWNLOAD:-'false'}" = "true" ]; then
     echo "FLUX.2 Models download enabled."
     cat /container/preset_lists/download_flux2.txt >> "${DOWNLOAD_LIST}"
 fi
-if [ -z "${ENABLED_FLUX2_MODELS_CHECKSUM:-''}" ] && [ "${ENABLED_FLUX2_MODELS_CHECKSUM:-'false'}" = "true" ]; then
-    echo "FLUX.2 Models checksum verification enabled."
-    cat /container/preset_lists/checksum_flux2.txt >> "${CHECKSUM_LIST}"
-fi
 
 # Qwen-Image Models
 if [ -z "${ENABLED_QWENIMAGE_MODELS_DOWNLOAD:-''}" ] && [ "${ENABLED_QWENIMAGE_MODELS_DOWNLOAD:-'false'}" = "true" ]; then
     echo "Qwen-Image Models download enabled."
     cat /container/preset_lists/download_qwenimage.txt >> "${DOWNLOAD_LIST}"
-fi
-if [ -z "${ENABLED_QWENIMAGE_MODELS_CHECKSUM:-''}" ] && [ "${ENABLED_QWENIMAGE_MODELS_CHECKSUM:-'false'}" = "true" ]; then
-    echo "Qwen-Image Models checksum verification enabled."
-    cat /container/preset_lists/checksum_qwenimage.txt >> "${CHECKSUM_LIST}"
 fi
 
 # LTX2 Video Models

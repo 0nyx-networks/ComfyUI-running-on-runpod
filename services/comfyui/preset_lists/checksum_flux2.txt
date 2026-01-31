@@ -1,4 +1,0 @@
-# SHA256SUM file_path
-863a82e4ff950a42a6b0e80bea824828f129eb1a8fbbdbd9e8cb29859127b486 /workspace/data/models/diffusion_models/flux2_dev_fp8mixed.safetensors
-e3467b7d912a234fb929cdf215dc08efdb011810b44bc21081c4234cc75b370e /workspace/data/models/text_encoders/mistral_3_small_flux2_fp8.safetensors
-d64f3a68e1cc4f9f4e29b6e0da38a0204fe9a49f2d4053f0ec1fa1ca02f9c4b5 /workspace/data/models/vae/flux2-vae.safetensors
