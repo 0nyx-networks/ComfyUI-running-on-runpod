@@ -12,13 +12,12 @@ ARG COMFYUI_TAG
 RUN set -eux \
     && apt-get update \
     && apt-get full-upgrade -y --no-install-recommends \
-    && apt-get install -y --no-install-recommends curl wget git aria2 ca-certificates parallel vim bash bash-completion libxcb1 \
+    && apt-get install -y --no-install-recommends curl wget git aria2 ca-certificates parallel vim bash bash-completion libxcb1 libglib2.0 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && uv venv -p 3.13 ${VENV_PATH} \
-    && . ${VENV_PATH}/bin/activate \
-    && uv pip install --upgrade numpy websockets pillow
+    && . ${VENV_PATH}/bin/activate
 
 RUN set -eux \
     # ComfyUI をクローン,　依存関係をインストール

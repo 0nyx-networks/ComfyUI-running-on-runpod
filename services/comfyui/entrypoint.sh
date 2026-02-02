@@ -48,6 +48,34 @@ fi
 
 # --- 4. カスタムノードをインストール ---
 
+# ComfyUI の custom_nodes ディレクトリを workspace 内に移動
+rm -rf ${COMFYUI_DIR}/custom_nodes/ 2>&1 >/dev/null
+ln -s ${WORKSPACE}/data/comfyui/custom_nodes ${COMFYUI_DIR}/custom_nodes
+ls -l ${COMFYUI_DIR}/custom_nodes
+
+# ComfyUI-Manager の設定ファイルを作成
+mkdir -p ${COMFYUI_DIR}/user/__manager/
+if [ ! -f ${COMFYUI_DIR}/user/__manager/config.ini ]; then
+cat << '_EOL_' > ${COMFYUI_DIR}/user/__manager/config.ini
+[default]
+git_exe =
+use_uv = True
+channel_url = https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main
+share_option = all
+bypass_ssl = False
+file_logging = True
+update_policy = stable-comfyui
+windows_selector_event_loop_policy = False
+model_download_by_agent = False
+downgrade_blacklist =
+security_level = normal
+always_lazy_install = False
+network_mode = personal_cloud
+db_mode = cache
+verbose = False
+_EOL_
+fi
+
 # Pixel Socket extensions for ComfyUI ノードをインストール
 pushd "${WORKSPACE}/data/comfyui/custom_nodes"
 if [ ! -d "pixel-socket-extensions-for-comfyui" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
@@ -81,30 +109,12 @@ cd comfyui-crystools
 uv pip install -r requirements.txt
 popd
 
-# ComfyUI-Custom-Scripts ノードをインストール
-pushd "${WORKSPACE}/data/comfyui/custom_nodes"
-if [ ! -d "comfyui-custom-scripts" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
-    echo "Installing/upgrading ComfyUI-Custom-Scripts..."
-    rm -rf comfyui-custom-scripts >/dev/null 2>&1
-    git clone -b main --depth 1 https://github.com/pythongosssss/ComfyUI-Custom-Scripts.git comfyui-custom-scripts
-fi
-popd
-
 # ComfyUI-Autocomplete-Plus ノードをインストール
 pushd "${WORKSPACE}/data/comfyui/custom_nodes"
 if [ ! -d "comfyui-autocomplete-plus" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
     echo "Installing/upgrading ComfyUI-Autocomplete-Plus..."
     rm -rf comfyui-autocomplete-plus >/dev/null 2>&1
     git clone -b main --depth 1 https://github.com/newtextdoc1111/ComfyUI-Autocomplete-Plus.git comfyui-autocomplete-plus
-fi
-popd
-
-# ComfyUI-ppm ノードをインストール
-pushd "${WORKSPACE}/data/comfyui/custom_nodes"
-if [ ! -d "comfyui-ppm" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
-    echo "Installing/upgrading ComfyUI-ppm..."
-    rm -rf comfyui-ppm >/dev/null 2>&1
-    git clone -b master --depth 1 https://github.com/pamparamm/ComfyUI-ppm.git comfyui-ppm
 fi
 popd
 
@@ -207,10 +217,5 @@ else
     python3 -u main.py --listen 0.0.0.0 --port 8188 ${CLI_ARGS} &
 fi
 popd
-
-# --- 7. start preview gallery ---
-if [ -z "${ENABLED_COMFYUI_PREVIEW_GALLERY:-''}" ] && [ "${ENABLED_COMFYUI_PREVIEW_GALLERY:-'false'}" = "true" ]; then
-    python3 -u /container/preview_gallery.py &
-fi
 
 wait
