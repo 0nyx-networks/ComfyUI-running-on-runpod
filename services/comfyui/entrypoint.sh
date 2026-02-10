@@ -88,37 +88,6 @@ cd pixel-socket-extensions-for-comfyui
 uv pip install -r requirements.txt
 popd
 
-# ComfyUI-Impact-Pack ノードをインストール
-pushd "${WORKSPACE}/data/comfyui/custom_nodes"
-if [ ! -d "comfyui-impact-pack" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
-    echo "Installing/upgrading ComfyUI-Impact-Pack..."
-    rm -rf comfyui-impact-pack >/dev/null 2>&1
-    git clone -b Main --depth 1 https://github.com/ltdrdata/ComfyUI-Impact-Pack.git comfyui-impact-pack
-fi
-cd comfyui-impact-pack
-uv pip install -r requirements.txt
-popd
-
-# comfyui-crystools ノードをインストール
-pushd "${WORKSPACE}/data/comfyui/custom_nodes"
-if [ ! -d "comfyui-crystools" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
-    echo "Installing/upgrading comfyui-crystools..."
-    rm -rf comfyui-crystools >/dev/null 2>&1
-    git clone -b main --depth 1 https://github.com/crystian/comfyui-crystools.git comfyui-crystools
-fi
-cd comfyui-crystools
-uv pip install -r requirements.txt
-popd
-
-# ComfyUI-Autocomplete-Plus ノードをインストール
-pushd "${WORKSPACE}/data/comfyui/custom_nodes"
-if [ ! -d "comfyui-autocomplete-plus" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
-    echo "Installing/upgrading ComfyUI-Autocomplete-Plus..."
-    rm -rf comfyui-autocomplete-plus >/dev/null 2>&1
-    git clone -b main --depth 1 https://github.com/newtextdoc1111/ComfyUI-Autocomplete-Plus.git comfyui-autocomplete-plus
-fi
-popd
-
 # matrix-nio をインストール(ComfyUI-Manager 用)
 uv pip install matrix-nio
 
