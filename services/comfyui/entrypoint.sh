@@ -77,14 +77,33 @@ verbose = False
 _EOL_
 fi
 
-# Pixel Socket extensions for ComfyUI ノードをインストール
+# comfy-cli をインストール
+uv pip install comfy-cli
+# 初回に Do you agree to enable tracking to improve the application? [y/N]: を聞かれるので自動で "N" を入力して設定する
+echo "N" | comfy set-default ${COMFYUI_DIR}
+comfy env
+
+# Pixel Socket extensions for ComfyUI をインストール
+#comfy node install pixel-socket-extensions-for-comfyui は別でComfyUI-Managerをインストールしないと動作しないため手動でインストール
 pushd "${WORKSPACE}/data/comfyui/custom_nodes"
 if [ ! -d "pixel-socket-extensions-for-comfyui" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
     echo "Installing/upgrading pixel-socket-extensions-for-comfyui..."
     rm -rf pixel-socket-extensions-for-comfyui >/dev/null 2>&1
-    git clone -b main --depth 1 https://github.com/foundation0-link/pixel-socket-extensions-for-comfyui.git
+    git clone -b main --depth 1 https://github.com/0nyx-networks/pixel-socket-extensions-for-comfyui.git
 fi
 cd pixel-socket-extensions-for-comfyui
+uv pip install -r requirements.txt
+popd
+
+# comfyui-crystools をインストール
+#comfy node install ComfyUI-Crystools は別でComfyUI-Managerをインストールしないと動作しないため手動でインストール
+pushd "${WORKSPACE}/data/comfyui/custom_nodes"
+if [ ! -d "comfyui-crystools" ] || [ "${FORCE_UPGRADE_CUSTOM_NODES:-'false'}" = "true" ] ; then
+    echo "Installing/upgrading comfyui-crystools..."
+    rm -rf comfyui-crystools >/dev/null 2>&1
+    git clone -b main --depth 1 https://github.com/crystian/comfyui-crystools.git comfyui-crystools
+fi
+cd comfyui-crystools
 uv pip install -r requirements.txt
 popd
 
@@ -94,6 +113,7 @@ uv pip install matrix-nio
 # pynvml を nvidia-ml-py に置き換え
 uv pip uninstall pynvml
 uv pip install -U nvidia-ml-py
+
 
 # --- 5. safetensors の自動ダウンロード機能 ---
 export DOWNLOAD_LIST="/container/download_list.txt"
