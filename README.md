@@ -1,4 +1,4 @@
-# ComfyUI running on runpod 
+# ComfyUI running on runpod
 
 This repository provides a setup to run [ComfyUI](https://github.com/comfyanonymous/ComfyUI) on a Linux container using Podman/Docker.
 
@@ -10,13 +10,13 @@ This repository provides a setup to run [ComfyUI](https://github.com/comfyanonym
 ## Setup
 1. Clone this repository to your local machine or directly to your Runpod container.
 ```bash
-git clone https://github.com/m10i-0nyx/ComfyUI-running-on-runpod.git
+git clone https://github.com/0nyx-networks/ComfyUI-running-on-runpod.git
 cd ComfyUI-running-on-runpod
 ```
 
 2. (Optional) Create an `env` file to specify the ComfyUI version you want to use. If not specified, it will use the default version defined in the `build.sh` script.
 ```bash
-echo "COMFYUI_TAG=v0.8.0" > env
+echo "COMFYUI_TAG=v0.14.2" > env
 ```
 
 3. Build the ComfyUI container.
@@ -24,21 +24,7 @@ echo "COMFYUI_TAG=v0.8.0" > env
 ./build.sh
 ```
 
-4. Select one of the following methods to push the container image to a container registry.
-
-Push the container to Amazon Elastic Container Registry (ECR).
-```bash
-export AWS_PUBLIC_ECR_URL="public.ecr.aws/{USERNAME}/comfyui-running-on-runpod"
-./push_aws_ecr.sh
-```
-
-Push the container to Github Packages Registry.
-```bash
-export GITHUB_USERNAME="GITHUB USERNAME"
-./push_github_packages.sh
-```
-
-6. Deploy a Pod on Runpod using the pushed container image URL.
+4. Deploy a Pod on Runpod using the pushed container image URL.
 
 ## Thanks
 
